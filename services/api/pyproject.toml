@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ownly-api"
+version = "0.1.0"
+description = "FastAPI backend for the Ownly Personal Ownership Management Platform"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.14.0",
+  "boto3>=1.35.0",
+  "email-validator>=2.2.0",
+  "fastapi>=0.115.0",
+  "passlib[bcrypt]>=1.7.4",
+  "pgvector>=0.3.6",
+  "psycopg[binary]>=3.2.3",
+  "pydantic-settings>=2.6.1",
+  "python-jose[cryptography]>=3.3.0",
+  "python-multipart>=0.0.17",
+  "redis>=5.2.0",
+  "sqlalchemy>=2.0.36",
+  "uvicorn[standard]>=0.32.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27.2",
+  "mypy>=1.13.0",
+  "pytest>=8.3.3",
+  "pytest-asyncio>=0.24.0",
+  "ruff>=0.7.4"
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = false
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+exclude = ["alembic*"]

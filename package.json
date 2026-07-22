@@ -1,0 +1,32 @@
+{
+  "name": "ownly-saas",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Ownly Personal Ownership Management Platform monorepo",
+  "workspaces": [
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @ownly/web",
+    "build": "npm run build --workspace @ownly/web",
+    "lint": "npm run lint --workspace @ownly/web",
+    "typecheck": "npm run typecheck --workspace @ownly/web",
+    "api:dev": "cd services/api && uvicorn app.main:app --reload --port 8000",
+    "api:test": "cd services/api && pytest",
+    "format": "prettier --write \"apps/web/**/*.{ts,tsx,css,md}\" \"packages/shared/**/*.{ts,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.10",
+    "next": {
+      "postcss": "^8.5.10"
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

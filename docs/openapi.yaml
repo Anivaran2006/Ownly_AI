@@ -1,0 +1,608 @@
+openapi: 3.1.0
+info:
+  title: Ownly API
+  version: 0.1.0
+  description: API starter for the Ownly Personal Ownership Management Platform.
+servers:
+  - url: https://api.ownly.app/v1
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    Workspace:
+      type: object
+      required: [id, name, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member, viewer, limited]
+        plan:
+          type: string
+    Product:
+      type: object
+      required: [id, workspaceId, name, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspaceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [active, returned, sold, lost, disposed, archived]
+        purchaseDate:
+          type: string
+          format: date
+        purchasePrice:
+          type: number
+        purchaseCurrency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        sellerName:
+          type: string
+        warrantyEndDate:
+          type: string
+          format: date
+        returnDeadline:
+          type: string
+          format: date
+        estimatedResaleValue:
+          type: number
+        aiSummary:
+          type: string
+    ProductCreate:
+      type: object
+      required: [workspaceId, name]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        category:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        purchasePrice:
+          type: number
+        purchaseCurrency:
+          type: string
+          default: INR
+        sellerName:
+          type: string
+    UploadSessionCreate:
+      type: object
+      required: [workspaceId, filename, mimeType, byteSize, documentKind]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        mimeType:
+          type: string
+        byteSize:
+          type: integer
+        checksumSha256:
+          type: string
+        documentKind:
+          type: string
+          enum: [invoice, warranty, manual, receipt, photo, service_record, insurance, other]
+    UploadSession:
+      type: object
+      required: [uploadId, documentId, uploadUrl, expiresAt]
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+          format: uri
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+    Scan:
+      type: object
+      required: [id, workspaceId, documentId, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspaceId:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, needs_review, completed, failed]
+        averageConfidence:
+          type: number
+        productCandidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductCandidate'
+    ProductCandidate:
+      type: object
+      required: [name, confidence, fields]
+      properties:
+        name:
+          type: string
+        confidence:
+          type: number
+        fields:
+          type: object
+          additionalProperties: true
+        evidence:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    SearchRequest:
+      type: object
+      required: [workspaceId, query]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        query:
+          type: string
+        filters:
+          type: object
+          additionalProperties: true
+        limit:
+          type: integer
+          default: 20
+    SearchResponse:
+      type: object
+      required: [query, results]
+      properties:
+        query:
+          type: string
+        interpretedIntent:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              id:
+                type: string
+                format: uuid
+              title:
+                type: string
+              snippet:
+                type: string
+              score:
+                type: number
+              citations:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+    ChatRequest:
+      type: object
+      required: [workspaceId, message]
+      properties:
+        workspaceId:
+          type: string
+          format: uuid
+        conversationId:
+          type: string
+          format: uuid
+        message:
+          type: string
+    ChatResponse:
+      type: object
+      required: [conversationId, answer]
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+        answer:
+          type: string
+        actions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        citations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    AnalyticsOverview:
+      type: object
+      required: [totalAssets, totalPurchaseValue, activeWarranties, upcomingActions]
+      properties:
+        totalAssets:
+          type: integer
+        totalPurchaseValue:
+          type: number
+        currency:
+          type: string
+        activeWarranties:
+          type: integer
+        upcomingActions:
+          type: integer
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              value:
+                type: number
+
+paths:
+  /auth/register:
+    post:
+      security: []
+      summary: Create a user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, fullName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 12
+                fullName:
+                  type: string
+      responses:
+        '201':
+          description: User created
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      security: []
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login result with tokens or MFA challenge
+
+  /auth/google:
+    post:
+      security: []
+      summary: Exchange Google OAuth code for an Ownly session
+      responses:
+        '200':
+          description: Session issued
+
+  /workspaces:
+    get:
+      summary: List workspaces for current user
+      responses:
+        '200':
+          description: Workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+    post:
+      summary: Create a workspace
+      responses:
+        '201':
+          description: Workspace created
+
+  /uploads/sessions:
+    post:
+      summary: Create a signed encrypted upload session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadSessionCreate'
+      responses:
+        '201':
+          description: Upload session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSession'
+
+  /uploads/{uploadId}/complete:
+    post:
+      summary: Confirm upload and enqueue scanner pipeline
+      parameters:
+        - in: path
+          name: uploadId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Processing started
+
+  /scans:
+    post:
+      summary: Start a scan from an uploaded document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, documentId]
+              properties:
+                workspaceId:
+                  type: string
+                  format: uuid
+                documentId:
+                  type: string
+                  format: uuid
+      responses:
+        '202':
+          description: Scan queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scan'
+
+  /scans/{scanId}:
+    get:
+      summary: Get scan status and extracted candidates
+      parameters:
+        - in: path
+          name: scanId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Scan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scan'
+
+  /scans/{scanId}/confirm:
+    post:
+      summary: Confirm extracted candidates and create product profiles
+      parameters:
+        - in: path
+          name: scanId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Products created
+
+  /products:
+    get:
+      summary: List products
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: seller
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      summary: Create a product manually or from confirmed extraction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  /products/{productId}:
+    get:
+      summary: Get a complete product profile
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    patch:
+      summary: Update a product profile
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product updated
+
+  /products/{productId}/timeline-events:
+    post:
+      summary: Add a repair, service, warranty, sale, or note event
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Timeline event created
+
+  /search:
+    post:
+      summary: Natural language ownership search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /chat:
+    post:
+      summary: AI chat over workspace inventory with citations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+
+  /analytics/overview:
+    get:
+      summary: Dashboard overview metrics
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverview'
+
+  /reminders:
+    get:
+      summary: List upcoming reminders
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reminders
+    post:
+      summary: Create a reminder
+      responses:
+        '201':
+          description: Reminder created
+

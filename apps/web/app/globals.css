@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 20% 97%;
+  --foreground: 205 29% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 205 29% 9%;
+  --muted: 200 19% 93%;
+  --muted-foreground: 208 10% 43%;
+  --border: 205 21% 88%;
+  --primary: 173 83% 34%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 218 91% 59%;
+  --accent-foreground: 0 0% 100%;
+  --warning: 40 100% 43%;
+  --risk: 5 64% 58%;
+}
+
+.dark {
+  --background: 215 19% 7%;
+  --foreground: 210 40% 96%;
+  --card: 213 21% 12%;
+  --card-foreground: 210 40% 96%;
+  --muted: 213 18% 17%;
+  --muted-foreground: 215 13% 68%;
+  --border: 214 16% 24%;
+  --primary: 172 64% 55%;
+  --primary-foreground: 210 40% 6%;
+  --accent: 218 91% 72%;
+  --accent-foreground: 210 40% 6%;
+  --warning: 40 89% 62%;
+  --risk: 5 95% 75%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  min-height: 100%;
+  background: hsl(var(--background));
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 30rem),
+    linear-gradient(180deg, hsl(0 0% 100% / 0.45), transparent 22rem),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 30rem),
+    linear-gradient(180deg, hsl(var(--accent) / 0.06), transparent 22rem),
+    hsl(var(--background));
+}
+
+button,
+input {
+  font: inherit;
+}
+
+@layer components {
+  .glass-panel {
+    @apply border bg-card/80 shadow-soft backdrop-blur-2xl;
+  }
+}
